@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spicy Library Pi</title>
+  <style>
+    body { font-family: Arial; background-color:#111; color:#fff; margin:0; padding:20px;}
+    h1 { color:#ff4500; }
+    .books-container { display:flex; flex-wrap:wrap; }
+    .book { border:1px solid #444; padding:10px; margin:10px; border-radius:8px; background-color:#222; max-width:250px; text-align:center; }
+    .book img { width:200px; margin-bottom:10px; }
+    button { padding:6px 12px; border-radius:5px; border:none; cursor:pointer; margin-top:5px; }
+    button.pi-pay { background-color:#00b300; color:white; }
+    button.pi-pay:hover { background-color:#00d000; }
+    #bookDetails { display:none; border:1px solid #444; padding:20px; border-radius:8px; background-color:#222; margin-bottom:20px; }
+    #bookDetails img { width:300px; display:block; margin-bottom:10px; }
+    #backBtn { background-color:#ff4500; color:white; margin-bottom:10px; }
+    #backBtn:hover { background-color:#ff6347; }
+    #userLibrary { border:1px solid #444; padding:10px; border-radius:8px; background-color:#222; margin-bottom:20px; max-width:400px; }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Pi SDK ??????? -->
+  <script src="https://web.minepi.com/pi.js"></script>
+</head>
+<body>
+
+<h1>?? Spicy Library Pi</h1>
+
+<!-- User Library -->
+<div id="userLibrary" style="display:none;">
+  <h2>Your Library</h2>
+  <div id="myBooks"></div>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<hr>
+
+<!-- Book Details -->
+<div id="bookDetails">
+  <button id="backBtn" onclick="showBooks()">? Back to all books</button>
+  <div id="detailsContent"></div>
+</div>
+
+<!-- Books Container -->
+<div id="booksContainer" class="books-container"></div>
+
+<script>
+// =================== Firebase Config ===================
+const firebaseConfig = {
+  apiKey: "AIzaSyBwfwugnPYvdsL4wApe1QF5IM6QTwZwbms",
+  authDomain: "spicy-f2a1b.firebaseapp.com",
+  projectId: "spicy-f2a1b",
+  storageBucket: "spicy-f2a1b.firebasestorage.app",
+  messagingSenderId: "393201465836",
+  appId: "1:393201465836:web:70e0ee76581d16bed868c9",
+  measurementId: "G-NJ66KF296Z"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// =================== Books Data ===================
+const books = [
+  { title: "Love Story", author: "Asmanour", pricePi: 5, cover: "cover1.jpg", description: "A hidden childhood love grows into an eternal romance after many trials and tears." },
+  { title: "Adventure Tales", author: "John Doe", pricePi: 3, cover: "cover2.jpg", description: "Exciting adventures full of mystery, courage, and unforgettable journeys." },
+  { title: "Tech & Web3", author: "Jane Smith", pricePi: 7, cover: "cover3.jpg", description: "Discover the future of blockchain, cryptocurrencies, and decentralized technology." }
+];
+
+let currentUser = null; // Pi ID
+
+const booksContainer = document.getElementById("booksContainer");
+const bookDetails = document.getElementById("bookDetails");
+const detailsContent = document.getElementById("detailsContent");
+const myBooksDiv = document.getElementById("myBooks");
+
+// =================== Functions ===================
+function showBooks(){ bookDetails.style.display="none"; booksContainer.style.display="flex"; }
+
+function showBookDetail(index){
+  const book = books[index];
+  booksContainer.style.display="none";
+  bookDetails.style.display="block";
+  detailsContent.innerHTML = `
+    <img src="${book.cover}" alt="${book.title}">
+    <h2>${book.title}</h2>
+    <p><strong>Author:</strong> ${book.author}</p>
+    <p><strong>Price:</strong> ${book.pricePi} Pi</p>
+    <p>${book.description}</p>
+    <button class="pi-pay" onclick="payWithPi('${book.title}', ${book.pricePi})">Pay with Pi</button>
+  `;
+}
+
+// Render books
+books.forEach((book,i)=>{
+  const bookHTML=document.createElement('div');
+  bookHTML.className="book";
+  bookHTML.innerHTML=`
+    <img src="${book.cover}" alt="${book.title}">
+    <h3><a onclick="showBookDetail(${i})">${book.title}</a></h3>
+    <p>${book.author}</p>
+    <p>${book.pricePi} Pi</p>
+    <button class="pi-pay" onclick="payWithPi('${book.title}', ${book.pricePi})">Pay with Pi</button>
+  `;
+  booksContainer.appendChild(bookHTML);
+});
+
+// =================== Pi Authentication ===================
+const pi = new Pi({
+  apiKey: "nghmbfevcggtvnynt9vliscqo2rigb3daivu0xmpm9lzyoajabslqoogfk45vnlp"
+});
+
+async function loginPi() {
+  try {
+    const user = await pi.authenticate();
+    currentUser = user.publicAddress;
+    document.getElementById("userLibrary").style.display = "block";
+    displayUserLibrary();
+  } catch (err) {
+    console.error("Pi login failed:", err);
+    alert("Pi login failed! Make sure you are using Pi Browser and HTTPS.");
+  }
+}
+
+// Logout
+function logout(){ currentUser=null; document.getElementById("userLibrary").style.display="none"; showBooks(); }
+
+// Display user library from Firebase
+async function displayUserLibrary(){
+  if(!currentUser) return;
+  const userRef = db.collection("users").doc(currentUser);
+  const docSnap = await userRef.get();
+  let myBooks = [];
+  if(docSnap.exists) myBooks = docSnap.data().books || [];
+  if(myBooks.length === 0) myBooksDiv.innerHTML = "<p>You have no books yet.</p>";
+  else myBooksDiv.innerHTML = myBooks.map(b => `<p>${b}</p>`).join("");
+}
+
+// Pay with Pi and save to Firebase
+async function payWithPi(title, price){
+  if (!currentUser) { await loginPi(); if (!currentUser) return; }
+  if (!window.Pi) { alert("Open inside Pi Browser!"); return; }
+  try {
+    const payment = await pi.createPayment({
+      amount: price.toString(),
+      currency: "Pi",
+      memo: `Buy ${title}`
+    });
+    if (payment) {
+      alert("Payment requested ??");
+      const userRef = db.collection("users").doc(currentUser);
+      await userRef.set({ books: firebase.firestore.FieldValue.arrayUnion(title) }, { merge: true });
+      displayUserLibrary();
+    }
+  } catch(err) {
+    console.error("Payment failed ?", err);
+    alert("Payment failed ?");
+  }
+}
+
+// Initial display
+showBooks();
+</script>
+
+</body>
+</html>
