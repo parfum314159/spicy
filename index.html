@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spicy Library</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #ff4500;
+    }
+    a {
+      color: #00bfff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .books-container {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .book {
+      border: 1px solid #444;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      background-color: #222;
+      max-width: 250px;
+      text-align: center;
+    }
+    .book img {
+      width: 200px;
+      margin-bottom: 10px;
+    }
+    button.pi-pay {
+      background-color: #00b300;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-top: 8px;
+    }
+    button.pi-pay:hover {
+      background-color: #00d000;
+    }
+    #bookDetails {
+      display: none;
+      border: 1px solid #444;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #222;
+      margin-bottom: 20px;
+    }
+    #bookDetails img {
+      width: 300px;
+      display: block;
+      margin-bottom: 10px;
+    }
+    #backBtn {
+      background-color: #ff4500;
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    #backBtn:hover {
+      background-color: #ff6347;
+    }
+  </style>
+
+  <!-- Pi SDK -->
+  <script src="https://sandbox.minepi.com/marketplace/pi.js"></script>
+</head>
+<body>
+
+<h1>?? Welcome to Spicy Library</h1>
+<p>Pay with Pi directly using your Pi Wallet (inside Pi Browser)</p>
+
+<div id="bookDetails">
+  <button id="backBtn" onclick="showBooks()">? Back to all books</button>
+  <div id="detailsContent"></div>
+</div>
+
+<div id="booksContainer" class="books-container"></div>
+
+<script>
+const books = [
+  { title: "Love Story", author: "Asmanour", pricePi: 5, cover: "cover1.jpg", description: "A hidden childhood love grows into an eternal romance after many trials and tears." },
+  { title: "Adventure Tales", author: "John Doe", pricePi: 3, cover: "cover2.jpg", description: "Exciting adventures full of mystery, courage, and unforgettable journeys." },
+  { title: "Tech & Web3", author: "Jane Smith", pricePi: 7, cover: "cover3.jpg", description: "Discover the future of blockchain, cryptocurrencies, and decentralized technology." }
+];
+
+const booksContainer = document.getElementById("booksContainer");
+const bookDetails = document.getElementById("bookDetails");
+const detailsContent = document.getElementById("detailsContent");
+
+function showBooks() {
+  bookDetails.style.display = "none";
+  booksContainer.style.display = "flex";
+}
+
+function showBookDetail(index) {
+  const book = books[index];
+  booksContainer.style.display = "none";
+  bookDetails.style.display = "block";
+  detailsContent.innerHTML = `
+    <img src="${book.cover}" alt="${book.title}">
+    <h2>${book.title}</h2>
+    <p><strong>Author:</strong> ${book.author}</p>
+    <p><strong>Price:</strong> ${book.pricePi} Pi</p>
+    <p>${book.description}</p>
+    <button class="pi-pay" onclick="payWithPi('${book.title}', ${book.pricePi})">Pay with Pi</button>
+  `;
+}
+
+// ????? ???????? ?????
+books.forEach((book, i) => {
+  const bookHTML = document.createElement('div');
+  bookHTML.className = "book";
+  bookHTML.innerHTML = `
+    <img src="${book.cover}" alt="${book.title}">
+    <h3><a onclick="showBookDetail(${i})">${book.title}</a></h3>
+    <p>${book.author}</p>
+    <p>${book.pricePi} Pi</p>
+    <button class="pi-pay" onclick="payWithPi('${book.title}', ${book.pricePi})">Pay with Pi</button>
+  `;
+  booksContainer.appendChild(bookHTML);
+});
+
+// Pi Payment function
+async function payWithPi(title, price) {
+  if (!window.Pi) {
+    alert("Open inside Pi Browser to pay with Pi.");
+    return;
+  }
+  try {
+    await Pi.authenticate();
+    const payment = await Pi.createPayment({
+      amount: price.toString(),
+      currency: "Pi",
+      memo: `Buy ${title}`
+    });
+    if (payment) alert(`Payment requested ??`);
+  } catch(err) {
+    alert("Payment failed ?");
+  }
+}
+
+// ???? ???? ?? ?????
+showBooks();
+</script>
+
+</body>
+</html>
