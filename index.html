@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spicy Digital Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Pi SDK -->
+<script src="https://web.minepi.com/pi.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0f0f0f;
+  color:#fff;
+}
+
+/* LOGIN SCREEN */
+#loginScreen{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+#loginScreen h1{ color:#ff4f9a; }
+#loginScreen button{
+  padding:15px 35px;
+  font-size:18px;
+  border:none;
+  border-radius:30px;
+  background:#ff4f9a;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* APP */
+#app{
+  display:none;
+  padding:20px;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.book{
+  background:#1e1e1e;
+  padding:15px;
+  margin:15px 0;
+  border-radius:12px;
+}
+.book h3{ margin:0; color:#ffb6d5; }
+.book p{ margin:5px 0; }
+.book button{
+  background:#00c853;
+  border:none;
+  padding:10px 18px;
+  border-radius:20px;
+  color:#fff;
+  cursor:pointer;
+}
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:14px;
+  color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="loginScreen">
+  <h1>?? Spicy Library</h1>
+  <p>Login using your Pi Network account</p>
+  <button onclick="login()">?? Login with Pi</button>
+  <p id="loginStatus"></p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <h2>Welcome, <span id="username"></span> ??</h2>
+  </header>
+
+  <!-- BOOKS -->
+  <div class="book">
+    <h3>City of Digital Shadows</h3>
+    <p>Price: 1 Pi</p>
+    <button onclick="buy('City of Digital Shadows',1)">Buy</button>
+  </div>
+
+  <div class="book">
+    <h3>Pi Network & Web3 Future</h3>
+    <p>Price: 2 Pi</p>
+    <button onclick="buy('Pi Network & Web3 Future',2)">Buy</button>
+  </div>
+
+  <div class="book">
+    <h3>Secrets of Blockchain</h3>
+    <p>Price: 1.5 Pi</p>
+    <button onclick="buy('Secrets of Blockchain',1.5)">Buy</button>
+  </div>
+
+  <div class="book">
+    <h3>Love Story</h3>
+    <p>Price: 1 Pi</p>
+    <button onclick="buy('Love Story',1)">Buy</button>
+  </div>
+
+  <footer>
+    © 2025 Spicy Library – Powered by Pi Network
+  </footer>
+</div>
+
+<script>
+let user = null;
+
+/* LOGIN */
+async function login(){
+  try{
+    if(typeof Pi === "undefined"){
+      alert("?? Open this website inside Pi Browser");
+      return;
+    }
+
+    const auth = await Pi.authenticate(
+      ['username','payments'],
+      onIncompletePaymentFound
+    );
+
+    user = auth.user;
+    document.getElementById("username").innerText = user.username;
+
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+
+  }catch(e){
+    console.error(e);
+    document.getElementById("loginStatus").innerText = "? Login failed";
+  }
+}
+
+function onIncompletePaymentFound(payment){
+  console.log("Incomplete payment found", payment);
+}
+
+/* BUY */
+async function buy(book, amount){
+  try{
+    await Pi.createPayment({
+      amount: amount,
+      memo: "Purchase: " + book,
+      metadata: { book: book }
+    });
+    alert("? Payment request sent!");
+  }catch(e){
+    console.error(e);
+    alert("? Payment failed");
+  }
+}
+</script>
+
+</body>
+</html>
